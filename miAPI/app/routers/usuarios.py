@@ -6,39 +6,60 @@ from sqlalchemy.orm import Session
 from app.data.db import get_db
 from app.data.usuarioDB import Usuario
 
+
 router = APIRouter(
     prefix="/v1/usuarios",
     tags=["CRUD HTTP"]
 )
 
+
 @router.get("/")
 async def leer_usuarios(db: Session = Depends(get_db)):
-    
     usuarios = db.query(Usuario).all()
-    
+
     return {
         "status": "200",
         "total": len(usuarios),
         "usuarios": usuarios
     }
-    
+
+
+@router.get("/{id}", status_code=status.HTTP_200_OK)
+async def leer_usuario(
+    id: int,
+    db: Session = Depends(get_db)
+):
+    usuario = db.query(Usuario).filter(Usuario.id == id).first()
+
+    if not usuario:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuario no encontrado"
+        )
+
+    return usuario
+
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def crear_usuario(usuario: UsuarioBase, db: Session = Depends(get_db)):
-     nuevo_usuario = Usuario(
+async def crear_usuario(
+    usuario: UsuarioBase,
+    db: Session = Depends(get_db)
+):
+    nuevo_usuario = Usuario(
         nombre=usuario.nombre,
-        edad=usuario.edad )
-     
-     db.add(nuevo_usuario)
-     db.commit()
-     db.refresh(nuevo_usuario)
-     
-     return {
+        edad=usuario.edad
+    )
+
+    db.add(nuevo_usuario)
+    db.commit()
+    db.refresh(nuevo_usuario)
+
+    return {
         "mensaje": "Usuario Agregado",
         "usuario": nuevo_usuario
     }
-    
-    
+
+
 @router.put("/{id}", status_code=status.HTTP_200_OK)
 async def actualizar_usuario(
     id: int,
@@ -49,7 +70,10 @@ async def actualizar_usuario(
     usuario = db.query(Usuario).filter(Usuario.id == id).first()
 
     if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(
+            status_code=404,
+            detail="Usuario no encontrado"
+        )
 
     usuario.nombre = usuario_actualizado.nombre
     usuario.edad = usuario_actualizado.edad
@@ -63,7 +87,6 @@ async def actualizar_usuario(
     }
 
 
-
 @router.patch("/{id}", status_code=status.HTTP_200_OK)
 async def actualizar_parcial(
     id: int,
@@ -74,7 +97,10 @@ async def actualizar_parcial(
     usuario = db.query(Usuario).filter(Usuario.id == id).first()
 
     if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(
+            status_code=404,
+            detail="Usuario no encontrado"
+        )
 
     for key, value in datos.items():
         if hasattr(usuario, key):
@@ -98,7 +124,10 @@ async def eliminar_usuario(
     usuario = db.query(Usuario).filter(Usuario.id == id).first()
 
     if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(
+            status_code=404,
+            detail="Usuario no encontrado"
+        )
 
     db.delete(usuario)
     db.commit()

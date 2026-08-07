@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  ImageBackground,
-  Text,
-  TextInput,
-  Pressable,
-  FlatList,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import { SafeAreaView,  ScrollView,  ImageBackground, Text, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet,} from 'react-native';
 
 export default function App() {
 

@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from 'react';
 
-import {View, Text, TextInput, StyleSheet, Pressable, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 
 import {
   useLocalSearchParams,
   useRouter,
 } from 'expo-router';
 
-const API_URL = 'http://172.20.10.3:8000';
+const API_URL = 'http://172.20.10.10:8000';
+
 
 const USUARIO_API = 'admin';
 const CONTRASENA_API = '1234';

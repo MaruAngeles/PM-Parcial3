@@ -1,18 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useState,
+} from 'react';
 
-import { SafeAreaView, View, Text, FlatList, StyleSheet, Pressable,} from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 
-import { useRouter } from 'expo-router';
+import {
+  useFocusEffect,
+  useRouter,
+} from 'expo-router';
+
+const API_URL = 'http://172.20.10.10:8000';
 
 export default function ConsultaUsuariosScreen() {
-  const [usuarios, setUsuarios] = useState([]);
-
   const router = useRouter();
+
+  const [usuarios, setUsuarios] = useState([]);
+  const [cargando, setCargando] = useState(true);
 
   const obtenerUsuarios = async () => {
     try {
+      setCargando(true);
+
       const respuesta = await fetch(
-        'http://172.20.10.3:8000/v1/usuarios/'
+        `${API_URL}/v1/usuarios/`
       );
 
       const datos = await respuesta.json();
@@ -20,69 +39,106 @@ export default function ConsultaUsuariosScreen() {
       console.log('Respuesta API', datos);
 
       if (!respuesta.ok) {
-        console.log('Error de la API:', datos);
-        return;
+        throw new Error(
+          datos.detail ||
+          'No se pudieron obtener los usuarios'
+        );
       }
 
-      setUsuarios(datos.usuarios);
+      setUsuarios(datos.usuarios || []);
     } catch (error) {
-      console.log('Error:', error);
+      console.log(
+        'Error al consultar usuarios:',
+        error
+      );
+
+      Alert.alert(
+        'Error',
+        error.message ||
+        'No se pudieron cargar los usuarios'
+      );
+    } finally {
+      setCargando(false);
     }
   };
 
-  useEffect(() => {
-    obtenerUsuarios();
-  }, []);
-
-  const renderTarjeta = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.nombre}>
-        {item.nombre}
-      </Text>
-
-      <View style={styles.linea} />
-
-      <Text style={styles.info}>
-        Edad: {item.edad} años
-      </Text>
-
-      <Pressable
-        style={styles.botonDetalle}
-        onPress={() =>
-          router.push({
-            pathname: '/detalle/[id]',
-            params: {
-              id: item.id,
-            },
-          })
-        }
-      >
-        <Text style={styles.detalleTexto}>
-          Ver detalles →
-        </Text>
-      </Pressable>
-    </View>
+  useFocusEffect(
+    useCallback(() => {
+      obtenerUsuarios();
+    }, [])
   );
 
+  const renderUsuario = ({ item }) => {
+    return (
+      <View style={styles.tarjeta}>
+        <View>
+          <Text style={styles.nombre}>
+            {item.nombre}
+          </Text>
+
+          <Text style={styles.edad}>
+            {item.edad} años
+          </Text>
+        </View>
+
+        <Pressable
+          style={styles.botonDetalle}
+          onPress={() =>
+            router.push({
+              pathname: '/detalle/[id]',
+              params: {
+                id: item.id,
+              },
+            })
+          }
+        >
+          <Text style={styles.textoBoton}>
+            Ver detalles
+          </Text>
+        </Pressable>
+      </View>
+    );
+  };
+
+  if (cargando) {
+    return (
+      <View style={styles.centro}>
+        <ActivityIndicator size="large" />
+
+        <Text style={styles.textoCarga}>
+          Cargando usuarios...
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.titulo}>
-        Lista de Usuarios
+        Consulta de usuarios
+      </Text>
+
+      <Text style={styles.total}>
+        Total de usuarios: {usuarios.length}
       </Text>
 
       <FlatList
         data={usuarios}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderTarjeta}
+        keyExtractor={(item) =>
+          item.id.toString()
+        }
+        renderItem={renderUsuario}
+        contentContainerStyle={
+          styles.contenidoLista
+        }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contenidoLista}
         ListEmptyComponent={
           <Text style={styles.listaVacia}>
             No hay usuarios registrados.
           </Text>
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -93,67 +149,83 @@ const styles = StyleSheet.create({
     padding: 20,
   },
 
+  centro: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+  },
+
   titulo: {
-    fontSize: 28,
+    fontSize: 27,
     fontWeight: 'bold',
-    textAlign: 'center',
     color: '#1F2937',
-    marginBottom: 20,
+    marginBottom: 6,
+  },
+
+  total: {
+    fontSize: 15,
+    color: '#6B7280',
+    marginBottom: 18,
   },
 
   contenidoLista: {
-    paddingBottom: 20,
+    paddingBottom: 25,
   },
 
-  card: {
+  tarjeta: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    padding: 18,
-    marginBottom: 15,
-    elevation: 4,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
 
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
+    shadowColor: '#000000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     shadowOffset: {
       width: 0,
-      height: 3,
+      height: 2,
     },
+
+    elevation: 3,
   },
 
   nombre: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: 'bold',
-    color: '#2563EB',
+    color: '#1F2937',
   },
 
-  linea: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 10,
+  edad: {
+    fontSize: 15,
+    color: '#6B7280',
+    marginTop: 4,
   },
 
-  info: {
+  botonDetalle: {
+    backgroundColor: '#2563EB',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginTop: 14,
+  },
+
+  textoBoton: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+
+  textoCarga: {
+    marginTop: 12,
     fontSize: 16,
     color: '#4B5563',
   },
 
-  botonDetalle: {
-    alignSelf: 'flex-end',
-    marginTop: 15,
-    paddingVertical: 5,
-  },
-
-  detalleTexto: {
-    color: '#2563EB',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-
   listaVacia: {
     textAlign: 'center',
+    marginTop: 50,
     color: '#6B7280',
     fontSize: 16,
-    marginTop: 40,
   },
 });
