@@ -18,7 +18,7 @@ import {
   useRouter,
 } from 'expo-router';
 
-const API_URL = 'http://172.20.10.10:8000';
+const API_URL = 'http://192.168.8.12:8000';
 
 export default function ConsultaUsuariosScreen() {
   const router = useRouter();
